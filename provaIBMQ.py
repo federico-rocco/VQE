@@ -5,42 +5,21 @@ Created on Thu May 12 10:59:48 2022
 @author: cosmo
 """
 
-from qiskit import IBMQ, QuantumCircuit, execute
-from qiskit.opflow import X, Y, Z, I
-from qiskit_nature.settings import settings
-from qiskit_nature.drivers import UnitsType
-from qiskit_nature.drivers.second_quantization import PySCFDriver
-from qiskit_nature.problems.second_quantization.electronic import ElectronicStructureProblem
-from qiskit_nature.mappers.second_quantization import ParityMapper
-from qiskit_nature.converters.second_quantization import QubitConverter
-from qiskit_nature.mappers.second_quantization import JordanWignerMapper
-from qiskit_nature.circuit.library import HartreeFock, UCC
-from qiskit.algorithms.optimizers import COBYLA, SPSA, SLSQP
-from qiskit import Aer
-from qiskit.algorithms import VQE
-
-
-import numpy as np
-import scipy as sp
-import matplotlib.pyplot as plt
-import mpmath
+from qiskit import IBMQ
+from qiskit.providers.ibmq import least_busy
 from ferm_op import Hamiltonian
-
-options = {
-	'backend_name': 'ibmq_qasm_simulator'
-}
-
-
-state = Hamiltonian(3)
-hamiltonian = state.buildH()
-ansatz = state.build_ansatz
 
 
 provider = IBMQ.load_account();
-from qiskit.providers.ibmq import least_busy
+
+state = Hamiltonian(1,3)
+hamiltonian = state.buildH()
+ansatz = state.build_ansatz
+
 num_qubits = 3
 backend = least_busy(provider.backends(filters=lambda x: x.configuration().n_qubits >= num_qubits and not x.configuration().simulator and x.status().operational==True))
-
+from qiskit.tools.monitor import job_monitor
+job_monitor(job)
 vqe = state.vqe(backend)
 
 

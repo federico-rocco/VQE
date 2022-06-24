@@ -5,28 +5,20 @@ Created on Thu May 12 11:45:00 2022
 @author: cosmo
 """
 
-from qiskit_nature.settings import settings
-from qiskit_nature.drivers import UnitsType
-#from qiskit_nature.drivers.second_quantization import JordanWignerMapper, ParityMapper, FermionicMapper
-from qiskit_nature.mappers.second_quantization import JordanWignerMapper, ParityMapper, FermionicMapper
-from qiskit_nature.problems.second_quantization.electronic import ElectronicStructureProblem
 from qiskit_nature.converters.second_quantization import QubitConverter
-from qiskit_nature.operators.second_quantization import FermionicOp
-from qiskit_nature.circuit.library import HartreeFock, UCC
+from qiskit_nature.mappers.second_quantization import JordanWignerMapper
+from qiskit_nature.circuit.library import HartreeFock
 from qiskit.algorithms import VQE
 from qiskit.algorithms.optimizers import COBYLA, SPSA, SLSQP, CG
-from qiskit import Aer, transpile
 from qiskit.utils import QuantumInstance
-from qiskit.opflow import I, X, Z, Y, StateFn
+from qiskit.opflow import StateFn
 from qiskit.opflow.gradients import Gradient
 from qiskit.circuit import QuantumCircuit, Parameter
-from qiskit.circuit.library import TwoLocal
-from qiskit.quantum_info import state_fidelity, Statevector
+from operators import UCC
 
-import random
+
 import numpy as np
 import scipy as sp
-import matplotlib.pyplot as plt
 import mpmath
 
 k=0.4063
@@ -65,8 +57,9 @@ def coeff(m,n):
         
 class Hamiltonian:
     
-    def __init__(self, n_qubit):    
-        self.n_qubit = n_qubit
+    def __init__(self, n_fermions, n_qubits):    
+        self.n_qubits = n_qubits
+        self.n_fermions = n_fermions
         self.wavefunction = []
         self.hamiltonian = []
         self.alpha = Parameter('alpha')
@@ -75,7 +68,7 @@ class Hamiltonian:
     
     def build_a(self, i, dag=True):
         label = ""
-        for item in range(self.n_qubit):        
+        for item in range(self.n_qubits):        
             if item == i:
                 if dag==True:
                     label += "+"
@@ -86,11 +79,21 @@ class Hamiltonian:
         return label
     
     
-    def buildH(self):
+    def buildH(self):        
         ferm_op = 0
-        for m, n in [[_m, _n] for _m in range(self.n_qubit) for _n in range(self.n_qubit)]:
+        """
+        for m, n in [[_m, _n] for _m in range(self.n_qubits) for _n in range(self.n_qubits)]:
             ferm_op += FermionicOp((self.build_a(m,True),coeff(m,n)), display_format="dense") @ FermionicOp(self.build_a(n,False), display_format="dense")            
         hamiltonian = JordanWignerMapper().map(ferm_op)
+        
+        """
+        ferm_op = 0
+        op = UCC(self.n_fermions, self.n_qubits)
+        for m, n in [[_m, _n] for _m in range(self.n_qubits) for _n in range(self.n_qubits)]:
+            ferm_op += op.one_body(m, n, coeff=coeff(m,n))                
+        hamiltonian = ferm_op.reduce()
+        
+        #print(hamiltonian)
         self.hamiltonian = hamiltonian
         return hamiltonian
     
@@ -110,15 +113,17 @@ class Hamiltonian:
         wavefunction.cx(0, 1)
         wavefunction.cx(1, 0)
         self.wavefunction = wavefunction
-        print(wavefunction)
-        return wavefunction
+        #print(wavefunction)
+        op = UCC(self.n_fermions, self.n_qubits)
+        ansatz = op.UCC_ansatz()
+        return ansatz
 
 
     def vqe(self, backend):
         hamiltonian = self.buildH()
         wavefunction = self.build_ansatz()
         op = ~StateFn(hamiltonian)@StateFn(wavefunction)
-        grad = Gradient(grad_method='lin_comb').convert(operator=op, params=[self.alpha,self.beta])
+        grad = Gradient(grad_method='lin_comb').convert(operator=op)
         qi_sv = QuantumInstance(backend,
                         shots=1000,
                         seed_simulator=2,
