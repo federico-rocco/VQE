@@ -39,15 +39,7 @@ class Algorithm:
                         seed_simulator=self.seed)"""
     
         return job.result().get_counts(qc)
-        
-    def expectation(self, measurement):
-        #get expectation value
-        
-        exp_value = 0
-        for (state,value) in measurement.items():
-            sign = 1 if state.count('1') % 2 == 0 else -1
-            exp_value += sign * value/self.shots
-        return exp_value
+
         
         
         

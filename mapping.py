@@ -7,7 +7,6 @@ Created on Tue Jun 21 16:21:50 2022
 
 from qiskit_nature.operators.second_quantization import FermionicOp
 from qiskit_nature.mappers.second_quantization import JordanWignerMapper
-import numpy as np
 
 
 def jw_mapping(n_qubits, qubit, coeff=1, dagger=True): #return a or a_dag
@@ -33,14 +32,5 @@ def two_body(n_qubits, a, b, i, j, coeff=1): #a_a+ @ a_b+ @ a_i @ a_j
     op = JordanWignerMapper().map(op)
     return op
 
-def pauli_to_qc(pauli, qc, qb):
-    pauli = pauli.primitive
-    for i, item in enumerate(pauli):
-        item = str(item)
-        if item == 'X':
-            qc.h(qb[i])
-        elif item == 'Y':
-            qc.rx(-np.pi/2, qb[i])
-    return qc
                 
                 

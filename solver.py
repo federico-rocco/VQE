@@ -13,7 +13,7 @@ from qiskit.utils import QuantumInstance
 from qiskit.opflow import StateFn
 from qiskit.opflow.gradients import Gradient
 from qiskit.circuit import ParameterVector, Parameter
-import mapping as mp
+
 
 
 
@@ -68,20 +68,20 @@ class Eigensolver:
         
         
         E = 0
-        for pauli_string in self.hamiltonian:
-            qc = QuantumCircuit(qb, cb)
-            pauli_op = pauli_string.to_pauli_op()
-            qc = mp.pauli_to_qc(pauli_op, qc, qb)
-            qc = qc + ansatz_qc
+        for pauli in self.hamiltonian:
+            qc = ansatz_qc
+            #pauli_op = pauli_string.to_pauli_op()
+            qc = pauli.pauli_to_qc(qc, qb)
+            
             #print(qc)
             #theta_val = 0*2*np.pi
 
             #circ = [qc.bind_parameters({self.ansatz.parameters: theta_val})
                    # for theta_val in theta_range]
             measurement = self.algorithm.measure(qc, qb, cb)
-            expectation = self.algorithm.expectation(measurement)
+            expectation = pauli.expectation(measurement, self.algorithm.shots)
             #print(pauli_op.coeff,expectation,pauli_op)
-            E += pauli_op.coeff*expectation
+            E += pauli.coeff*expectation
         return E
     
     def optimize_parameters(self, theta=None):
