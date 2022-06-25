@@ -28,28 +28,20 @@ class UCC:
             theta = self.new_parameters()
             print("Initial parameters: ", theta)
         qc = self.UCCSD(qc, qb, theta)
-            #if 'S' in self.trunc:
-                #qc = self.UCCS(qc,qb,theta[0],rho,qa=qa,d_j=i)
-            #if 'D' in self.trunc:
-               # qc = self.UCCD(qc,qb,theta[1],rho,qa=qa,d_j=i)
         return qc
                              
     
     def pauli_sum_op_to_exp_op_circuit(self, qc, qb, pauli_sum_op, param):
-        #qc = QuantumCircuit(self.n_qubits)
         pauli_op_list = pauli_sum_op.to_pauli_op()
         for pauli_op in pauli_op_list:
             string = pauli_op.primitive.to_label()
             qc = self.exp_op(qc, qb, string, param)
-            #print("made a pauliop")
-        #print("made all pauliops")
         return qc
     
     
     def exp_op(self, qc, qb, pauli_string, theta): #exp(pauli_string)->circuit
         if not isinstance(pauli_string, str):
             raise ValueError("not a string")
-        #qc = QuantumCircuit(self.n_qubits)
 
         for (i, letter) in zip(range(self.n_qubits), pauli_string):
             if letter == "X":
@@ -113,7 +105,6 @@ class UCC:
             parameters = np.asarray(params)
         else:
             parameters = 2*np.pi*np.random.rand((self.singles+self.doubles)*self.depth)
-            print(parameters)
         self.parameters = parameters
         return parameters
     

@@ -16,7 +16,7 @@ class Hamiltonian:
         self.list = []
 
         
-    def __call__(self): #h_ij a+_i a_j
+    def __call__(self): #h_ij*a+_i*a_j
         h = 0
         for m, n in [[_m, _n] for _m in range(self.n_qubits) for _n in range(self.n_qubits)]:
              h +=mp.one_body(self.n_qubits, m, n, coeff=self.coeff[m][n])            
@@ -37,35 +37,25 @@ class Pauli: #PauliOp with metods
         self.coeff = pauli.coeff
         
     def pauli_to_qc(self, qc, qb):
-        #print(self.pauli_string)
         for i, item in enumerate(self.pauli_string):
-            #print(i,item)
             if item == 'X':
                 qc.h(qb[i])
-                #self.pauli_string[i] = 'Z'
             elif item == 'Y':
                 qc.rx(-np.pi/2, qb[i])
-                #self.pauli_string[i] = 'Z'
-        #print("string applied, " ,self.pauli_string)
         return qc
     
     def expectation(self, measurement, shots):
         #get expectation value
-        
+        #print(measurement)
         exp_value = 0
-        #print(self.pauli_string)
         for (state,value) in measurement.items():
-            #print(state)
-            sign = -1
+            sign = 1
             for (i,number) in enumerate(state):
-                if number == 1 and self.pauli_string[i] != 'I':
-                    #print("Z and 1 in position ",i)
+                if (number == '1' and self.pauli_string[i] != 'I'):
                     sign *= -1 
             exp_value += sign * value/shots
         return exp_value
-    
-    #def z_count(self):
-        #for 
+
     
     
     

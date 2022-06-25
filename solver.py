@@ -69,18 +69,14 @@ class Eigensolver:
         
         E = 0
         for pauli in self.hamiltonian:
-            qc = ansatz_qc
-            #pauli_op = pauli_string.to_pauli_op()
+            qc = QuantumCircuit(qb, cb)
+            qc = ansatz_qc + qc
             qc = pauli.pauli_to_qc(qc, qb)
-            
-            #print(qc)
-            #theta_val = 0*2*np.pi
 
-            #circ = [qc.bind_parameters({self.ansatz.parameters: theta_val})
-                   # for theta_val in theta_range]
             measurement = self.algorithm.measure(qc, qb, cb)
             expectation = pauli.expectation(measurement, self.algorithm.shots)
-            #print(pauli_op.coeff,expectation,pauli_op)
+            #print("coeff: ",pauli.coeff," string: ",pauli.pauli_string)
+            #print("result: ",pauli.coeff*expectation)
             E += pauli.coeff*expectation
         return E
     
@@ -90,7 +86,13 @@ class Eigensolver:
         params = self.optimizer(theta)
         return params
     
-    
+    def measure_ansatz(self, theta=None):
+        qb = QuantumRegister(self.n_qubits)
+        cb = ClassicalRegister(self.n_qubits)
+        qc = QuantumCircuit(qb, cb)
+        qc = self.ansatz(qc, qb, theta)
+        measurement = self.algorithm.measure(qc, qb, cb)
+        return measurement
             
             
 

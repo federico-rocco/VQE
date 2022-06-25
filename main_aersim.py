@@ -60,7 +60,7 @@ def coeff():
 
 coeffs = coeff()
 hamiltonian = Hamiltonian(fermions,orbitals,coeffs)
-ansatz = UCC(fermions,orbitals)#,quark=True)
+ansatz = UCC(fermions,orbitals,quark=True)
 backend = Aer.get_backend('aer_simulator_statevector')
 algorithm = Algorithm(1024, backend)
 optimizer = Minimizer('cobyla')
@@ -85,3 +85,5 @@ result = vqe.vqe_expval(theta)
 print("After optimization: ", result)
 
 
+#result = vqe.measure_ansatz()
+#print(result)
