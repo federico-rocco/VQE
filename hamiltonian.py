@@ -13,7 +13,6 @@ class Hamiltonian:
         self.n_fermions = n_fermions
         self.n_qubits = n_qubits
         self.coeff = coeff
-        self.list = []
 
         
     def __call__(self): #h_ij*a+_i*a_j
@@ -27,6 +26,7 @@ class Hamiltonian:
             pauli_op = pauli_sum_op.to_pauli_op()
             pauli_list.append(Pauli(pauli_op))
 
+        
         return pauli_list
 
 class Pauli: #PauliOp with metods

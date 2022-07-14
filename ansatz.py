@@ -6,6 +6,7 @@ Created on Sat Jun 18 09:55:13 2022
 """
 import numpy as np
 import mapping as mp
+from qiskit.circuit import ParameterVector
 
 
 
@@ -106,19 +107,19 @@ class UCC:
         else:
             parameters = 2*np.pi*np.random.rand((self.singles+self.doubles)*self.depth)
         self.parameters = parameters
-        return parameters
+        return parameters#ParameterVector('Θ', self.singles + self.doubles)
     
     
     def UCCSD(self, qc, qb, theta):
-        
+
         if self.quarkonium:
-            alpha, beta = theta[0],theta[1]
-            qc.ry(beta, 1)
-            qc.ry(2*alpha, 2)
+
+            qc.ry(theta[1], 1)
+            qc.ry(2*theta[0], 2)
             qc.cx(2, 0)
             qc.cx(0, 1)
             qc.x(2)
-            qc.ry(-1*beta, 1)
+            qc.ry(-1*theta[1], 1)
             qc.cx(0, 1)
             qc.cx(1, 0)
             return qc 
@@ -147,6 +148,8 @@ class UCC:
         
             #print(qc)
             return qc
+        
+
         
 
         
