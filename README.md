@@ -31,5 +31,7 @@ The eigensolver is implemented in solver.py. It receives:
    Reference: T. Giurgica-Tiron, Y. Hindy, R. LaRose, A. Mari and W. J. Zeng, "Digital zero noise extrapolation for quantum error mitigation," 
    2020 IEEE International Conference on Quantum Computing and Engineering (QCE), 2020, pp. 306-316, doi: 10.1109/QCE49297.2020.00045.
    
-   
+
+quarkonium.py contains the spcifics for the quarkonium model hamiltonian, while mapping.py converts construction and destruction operators into pauli operators
+through Jordan-Wigner mapping.
 'main_excited' and 'main_noise' are the main files, respectively for finding ground + excited states and for finding the ground state with noise extrapoation.
