@@ -34,4 +34,8 @@ The eigensolver is implemented in solver.py. It receives:
 
 quarkonium.py contains the spcifics for the quarkonium model hamiltonian, while mapping.py converts construction and destruction operators into pauli operators
 through Jordan-Wigner mapping.
+
 'main_excited' and 'main_noise' are the main files, respectively for finding ground + excited states and for finding the ground state with noise extrapoation.
+In the mains, algorithm, optimizer, ansatz and hamiltonian objects need to be instantiated and passed to the eigensolver object. You can choose to use a real QC
+or a simulator in the algorithm (IBMQ takes a lot more time, several hours at least to find the ground state). The ansatz can be a generic UCC (around 30 of circuit
+depth for 3 orbitals and 1 fermion) or the quarkonium specific one that takes less time (set quark=True in the ansatz).  
