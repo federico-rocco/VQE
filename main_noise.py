@@ -16,7 +16,7 @@ from quarkonium import *
 
 coeffs = coeff()
 hamiltonian = Hamiltonian(fermions,orbitals,coeffs)
-ansatz = UCC(fermions,orbitals,quark=True)
+ansatz = UCC(fermions,orbitals,method='quarkonium')
 
 options = {
     'shots':1024,

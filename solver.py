@@ -34,7 +34,6 @@ class Eigensolver:
         self.hamiltonian = hamiltonian
         self.algorithm = algorithm
         self.optimizer = optimizer
-        self.i = 0
         self.solved_states = []
         self.n_folding = 0
         
@@ -42,30 +41,35 @@ class Eigensolver:
 
 
     def vqe_qiskit(self):     
-        
+        #uses qiskit.algorithms.VQE 
         
         self.ansatz.count_excitations()
         qb = QuantumRegister(self.n_qubits)
         qc = QuantumCircuit(qb)
-        theta = ParameterVector('Θ', self.ansatz.singles + self.ansatz.doubles)
+        theta = ParameterVector('Θ', self.ansatz.singles + self.ansatz.doubles) #qiskit requires a parametrized ansatz
         ansatz = self.ansatz(qc, qb, theta=theta)
         
-        op = 0
-        ham = 0
+        #operator = sum <H|psi>
+        operator = 0
+        hamiltonian = 0
         for pauli in self.hamiltonian:
-            op += ~StateFn(pauli.pauli.to_pauli_op())@StateFn(ansatz)
-            ham += pauli.pauli
+            operator += ~StateFn(pauli.pauli.to_pauli_op())@StateFn(ansatz)
+            hamiltonian += pauli.pauli
             
-        grad = Gradient(grad_method='lin_comb').convert(operator=op, params=theta)
+        grad = Gradient(grad_method='lin_comb').convert(operator=operator, params=theta)
         qi_sv = QuantumInstance(backend=self.algorithm.backend,
                         shots=self.algorithm.shots,
                         seed_simulator=2,
                         seed_transpiler=2) 
         vqe = VQE(ansatz, optimizer=self.optimizer.opt, gradient=grad, quantum_instance=qi_sv)
-        return vqe.compute_minimum_eigenvalue(ham)
+        return vqe.compute_minimum_eigenvalue(hamiltonian)
     
 
     def vqe_expval(self, theta=None):
+        #self-made eigensolver, not using qiskit
+        #build ansatz, then add a term of the hamiltonian at a time and compute the
+        #expectation value <psi|H|psi>
+        
         qb = QuantumRegister(self.n_qubits)
         cb = ClassicalRegister(self.n_qubits)
         qc = QuantumCircuit(qb)
@@ -75,15 +79,16 @@ class Eigensolver:
         for pauli in self.hamiltonian:
             qc = QuantumCircuit(qb, cb)
             qc = ansatz_qc + qc
-            qc = pauli.pauli_to_qc(qc, qb)
-            qc = self.fold(qc)
-            measurement = self.algorithm.measure(qc, qb, cb)
-            expectation = pauli.expectation(measurement, self.algorithm.shots)
+            qc = pauli.pauli_to_qc(qc, qb) #the piece of hamiltonian acts on psi
+            qc = self.fold(qc) #extend the circuit in case of noise extrapolation
+            measurement = self.algorithm.measure(qc, qb, cb) #measure the circuit
+            expectation = pauli.expectation(measurement, self.algorithm.shots) #using relative frequencies compute exp_value
             E += pauli.coeff*expectation
 
         return E
     
     def fold(self, qc):
+        #U ---> U*(Udagger * U)^n where U is a unitary circuit
         
         qc0 = copy.deepcopy(qc)
         qc_inv = qc.inverse()
@@ -97,7 +102,6 @@ class Eigensolver:
     def optimize_parameters(self, loss_function, theta=None):
         if theta is None:
             theta = self.ansatz.new_parameters()
-
         result = self.optimizer(loss_function, theta)
         return result
     
@@ -130,17 +134,24 @@ class Eigensolver:
         return delta
    
     def expval_excited_state(self, theta_k):
-        
+        #https://arxiv.org/pdf/1805.08138.pdf
+        #F(Θk) = <ψ(Θk)| H |ψ(Θk)> + sum_i βi * |<ψ(Θk)|ψ(Θi)>|^2
+        #the first term is the normal expectation value, like for the ground state
+        #the second term is the overlap with all the previous excited states 
+        #it has to be minimized since the state k should be orthogonal to all the others
+        #βi can be set = to a very big value delta for all the states
+
         qb = QuantumRegister(self.n_qubits)
         cb = ClassicalRegister(self.n_qubits)
         qc = QuantumCircuit(qb, cb)
         ansatz_k = self.ansatz(qc, qb, theta_k)
+        
         overlap = 0
         for state in self.solved_states:
             qc = QuantumCircuit(qb, cb)
             inverse = self.ansatz(qc, qb, state.parameters).inverse()
             
-            new_qc = ansatz_k + inverse
+            new_qc = ansatz_k + inverse #<ψ(Θi)|ψ(Θk)> 
             
             measurement = self.algorithm.measure(new_qc, qb, cb)
 
@@ -148,7 +159,9 @@ class Eigensolver:
             for q in range(self.n_qubits-1):
                 zero += '0'
             if zero in measurement:
-                overlap += measurement[zero]
+                overlap += measurement[zero] 
+                #|<ψ(Θi)|ψ(Θk)>|^2 = |<0|ψ(Θi)^-1 ψ(Θk)|0>|^2
+                #so we just count the all '0' qubits
 
         return self.find_delta()*overlap + self.vqe_expval(theta_k)
 
