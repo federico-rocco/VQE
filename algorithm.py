@@ -5,7 +5,7 @@ Created on Wed Jun 22 12:18:37 2022
 @author: cosmo
 """
 
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, transpile
 from qiskit.tools.monitor import job_monitor
 from qiskit.providers.aer.noise import NoiseModel
 import qiskit as qk
@@ -44,6 +44,9 @@ class Algorithm:
 
     
     def measure(self, qc, qb, cb, n=0):
+        
+        #qc = transpile(qc, qk.Aer.get_backend('aer_simulator_statevector'), optimization_level=3)
+   
         qc.measure(qb,cb)
         
         if self.ibmq:

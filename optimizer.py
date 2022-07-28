@@ -11,10 +11,8 @@ class Minimizer:
     def __init__(self, 
                 method,
                 max_iter=200, # Minimizer iterations.
-                max_eval=200,  # Funtion evaluations.
                 tol=1e-08,
-                disp=True,
-                adapt=False):
+                disp=True):
 
         self.max_iter = max_iter
         self.tol = tol

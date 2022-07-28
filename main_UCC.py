@@ -16,7 +16,7 @@ from quarkonium import *
 
 coeffs = coeff()
 hamiltonian = Hamiltonian(fermions,orbitals,coeffs)
-ansatz = UCC(fermions,orbitals)
+ansatz = UCC(fermions,orbitals,'UCCSD')
 
 options = {
     'shots':1024,
@@ -29,8 +29,14 @@ optimizer = Minimizer('spsa', disp=False)
 
 vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
 
+import time
+start_time = time.time()
+
+
 
 #ground state
 optimized_parameters = vqe.optimize_parameters(vqe.vqe_expval)
 eigenvalue = vqe.vqe_expval(optimized_parameters)
 print(eigenvalue)
+
+print("--- %s seconds ---" % (time.time() - start_time))

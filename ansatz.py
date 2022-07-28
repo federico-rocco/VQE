@@ -13,7 +13,7 @@ from qiskit import QuantumCircuit, QuantumRegister
 
 class UCC:
     
-    def __init__(self, f, q, depth=1, method='UCCSD'):
+    def __init__(self, f, q, method, depth=1):
         self.n_fermions = f
         self.n_qubits = q
         self.singles = 0
@@ -32,7 +32,7 @@ class UCC:
         
         if self.method == 'quarkonium':
             qc = self.quarkonium(qc, qb, theta)
-        else:
+        elif self.method == 'UCCSD':
             qc = self.UCCSD(qc, qb, theta)
         return qc
     
@@ -97,7 +97,8 @@ class UCC:
             if letter == "X":
                 qc.h(qb[i])
             elif letter == "Y":
-                qc.rx(-np.pi/2, qb[i])
+                qc.h(qb[i])
+                qc.rx(np.pi/2, qb[i])
     
             
         #compute parity and store it in the last qubit
@@ -116,7 +117,8 @@ class UCC:
             if letter == "X":
                 qc.h(qb[i])
             elif letter == "Y":
-                qc.rx(np.pi/2, qb[i])
+                qc.rx(-np.pi/2, qb[i])
+                qc.h(qb[i])
 
         return qc
     
@@ -134,7 +136,7 @@ class UCC:
                             self.doubles += 1
                             
                             
-    def new_parameters(self,h=[],e=[]):
+    def new_parameters(self,h=[0],e=[]):
         #generates random initial parameters (or mp2 parameters, to be implemented) 
     
         if len(h)!=0 and len(e)!=0:

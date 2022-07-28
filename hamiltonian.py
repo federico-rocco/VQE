@@ -37,6 +37,7 @@ class Pauli: #PauliOp with metods
         self.coeff = pauli.coeff
         
     def pauli_to_qc(self, qc, qb):
+        #basis change 
         for i, item in enumerate(self.pauli_string):
             if item == 'X':
                 qc.h(qb[i])

@@ -20,12 +20,12 @@ ansatz = UCC(fermions,orbitals,method='quarkonium')
 
 options = {
     'shots':1024,
-    'ibmq':False,
-    'backend':'aer_simulator_statevector', #qasm/aer/ibmq_something
-    'device':'ibm_nairobi' #to be simulated if using simulator
+    'ibmq':True,
+    'backend':'ibm_nairobi', #qasm_simulator/aer_simulator_statevector/ibmq_something
+    #'device':'ibm_nairobi' #to be simulated if using simulator
     }
 algorithm = Algorithm(options)
-optimizer = Minimizer('')
+optimizer = Minimizer('spsa', max_iter=50)
 
 vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
 
