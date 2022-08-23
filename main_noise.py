@@ -6,7 +6,7 @@ Created on Thu May 12 10:59:48 2022
 """
 
 from hamiltonian import Hamiltonian
-from ansatz import UCC
+from ansatz import ansatz
 from solver import Eigensolver, State
 from qiskit import Aer, IBMQ
 from algorithm import Algorithm
@@ -16,18 +16,21 @@ from quarkonium import *
 
 coeffs = coeff()
 hamiltonian = Hamiltonian(fermions,orbitals,coeffs)
-ansatz = UCC(fermions,orbitals,method='quarkonium')
+ansatz = ansatz('UCCSD', n_fermions=fermions, n_qubits=orbitals)
 
 options = {
     'shots':1024,
-    'ibmq':True,
-    'backend':'ibm_nairobi', #qasm_simulator/aer_simulator_statevector/ibmq_something
-    #'device':'ibm_nairobi' #to be simulated if using simulator
+    'ibmq':False,
+    'backend':'qasm_simulator', #qasm_simulator/aer_simulator_statevector/ibmq_something
+    'device':'ibm_nairobi' #to be simulated if using simulator
     }
 algorithm = Algorithm(options)
-optimizer = Minimizer('spsa', max_iter=50)
+optimizer = Minimizer('spsa', max_iter=100)
 
 vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
+
+import time
+start_time = time.time()
 
 
 #ground state
@@ -64,3 +67,5 @@ optimized_parameters = vqe.optimize_parameters(vqe.vqe_expval)
 print("Optimized: ", vqe.vqe_expval(optimized_parameters))
 
 print("------------------------")
+
+print("--- %s seconds ---" % (time.time() - start_time))

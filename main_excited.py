@@ -6,7 +6,7 @@ Created on Wed Jul 13 18:49:15 2022
 """
 
 from hamiltonian import Hamiltonian
-from ansatz import UCC
+from ansatz import ansatz
 from solver import Eigensolver, State
 from qiskit import Aer, IBMQ
 from algorithm import Algorithm
@@ -16,12 +16,12 @@ from quarkonium import *
 
 coeffs = coeff()
 hamiltonian = Hamiltonian(fermions,orbitals,coeffs)
-ansatz = UCC(fermions,orbitals,method='quarkonium')
+ansatz = ansatz('quarkonium', n_fermions=fermions, n_qubits=orbitals)
 
 options = {
     'shots':1024,
     'ibmq':False,
-    'backend':'aer_simulator_statevector', #qasm/aer/ibmq_something
+    'backend':'qasm_simulator', #qasm/aer/ibmq_something
     #'device':'ibm_nairobi' #to be simulated if using simulator
     }
 algorithm = Algorithm(options)

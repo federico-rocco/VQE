@@ -9,8 +9,8 @@ import scipy as sp
 import mpmath
 
 
-k=0.4063
-sigma=441.6**2
+k=0.4063 #4/3*αs 
+sigma=441.6**2 #MeV^2
 mu=637.5
 omega=562.9
 b=1/np.sqrt(mu*omega)

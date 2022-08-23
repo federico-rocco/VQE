@@ -131,7 +131,7 @@ class Eigensolver:
         delta = 0
         for pauli in self.hamiltonian:
             delta += 2*abs(pauli.coeff)
-        return delta
+        return delta/1000
    
     def expval_excited_state(self, theta_k):
         #https://arxiv.org/pdf/1805.08138.pdf

@@ -11,11 +11,11 @@ from qiskit import QuantumCircuit, QuantumRegister
 
 
 
-class UCC:
+class ansatz:
     
-    def __init__(self, f, q, method, depth=1):
-        self.n_fermions = f
-        self.n_qubits = q
+    def __init__(self, method, n_fermions=None, n_qubits=None, depth=1):
+        self.n_fermions = n_fermions
+        self.n_qubits = n_qubits
         self.singles = 0
         self.doubles = 0
         self.depth = depth
@@ -34,6 +34,8 @@ class UCC:
             qc = self.quarkonium(qc, qb, theta)
         elif self.method == 'UCCSD':
             qc = self.UCCSD(qc, qb, theta)
+        elif self.method == 'ising':
+            qc = self.ising(qc, qb, theta)
         return qc
     
         
@@ -50,6 +52,21 @@ class UCC:
         qc.cx(0, 1)
         qc.cx(1, 0)
         return qc 
+    
+    def ising(self, qc, qb, theta):
+        
+        qc.rz(theta[0], 0)
+        qc.ry(theta[1], 0)
+
+        # apply series of CNOT gates
+        for i in range(1, self.n_qubits):
+            qc.cx(0, i)
+
+        # add parametrized single-qubit rotations around y
+        for i in range(self.n_qubits):
+            qc.ry(theta[2], i)
+            
+        return qc        
     
         
     
@@ -139,6 +156,9 @@ class UCC:
     def new_parameters(self,h=[0],e=[]):
         #generates random initial parameters (or mp2 parameters, to be implemented) 
     
+        if self.method == "ising":
+            return 2*np.pi*np.random.rand(3)
+        
         if len(h)!=0 and len(e)!=0:
             self.mp2 = True
             

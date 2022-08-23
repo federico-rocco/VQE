@@ -19,19 +19,23 @@ class Algorithm:
         self.shots = 1024 if options.get('shots') == None\
                             else options.get('shots')
         self.seed = np.random.randint(0,100000) if options.get('seed') == None\
-                            else options.get('seed')
+                            else options.get('seed')        
+        self.ibmq = options.get('ibmq')        
+
         
-        self.ibmq = options.get('ibmq')
         
         if self.ibmq == True:
             provider = qk.IBMQ.load_account()
             self.backend = provider.get_backend(options.get('backend'))
             self.monitor = job_monitor
-        
+
+            
         else:
             if options.get('backend') == None:
                 options['backend'] = 'qasm_simulator' 
-            self.backend = qk.Aer.get_backend(options['backend'])
+            self.backend = qk.Aer.get_backend(options['backend'])            
+            
+
             
             self.noise_model, self.coupling_map, self.basis_gates = None, None, None
             if options.get('device') != None: #simulate a real device
