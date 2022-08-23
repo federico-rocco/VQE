@@ -59,7 +59,6 @@ class Hamiltonian:
             label_lat = ""
             
             if i == self.n_qubits-1:
-                print("hey")
                 for item in range(self.n_qubits):                 
                     if item == i or item == 0:
                         label_lat += "Z"
@@ -78,8 +77,8 @@ class Hamiltonian:
             pauli_list.append(op_lat)
             
         
-        for p in pauli_list:
-            print(p.pauli_string)
+        #for p in pauli_list:
+            #print(p.pauli_string)
         return pauli_list
             
 

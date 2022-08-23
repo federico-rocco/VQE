@@ -43,8 +43,9 @@ def num_integrate_gs(B):
 orbitals = 3
 fermions = 0
 B = 0.1
+J = 1
 ising_coeff = {'B':B,
-               'J':1
+               'J':J
                }
 hamiltonian = Hamiltonian(n_qubits=orbitals, coeff=ising_coeff)
 ansatz = ansatz('ising', n_qubits=orbitals)
@@ -68,6 +69,7 @@ start_time = time.time()
 #ground state
 optimized_parameters = vqe.optimize_parameters(vqe.vqe_expval)
 eigenvalue = vqe.vqe_expval(optimized_parameters)
-print("result: ", eigenvalue, num_integrate_gs(B))
+eigenstate = vqe.get_eigenstate(optimized_parameters)
+print("result: ", eigenvalue, " expected: ", (-B/2-J/4)*orbitals, eigenstate)
 
 print("--- %s seconds ---" % (time.time() - start_time))
