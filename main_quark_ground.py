@@ -10,7 +10,7 @@ from ansatz import ansatz
 from solver import Eigensolver, State
 from qiskit import Aer, IBMQ
 from algorithm import Algorithm
-from optimizer import Minimizer
+from optimizer import Optimizer
 from quarkonium import *
 import matplotlib as mpt
 
@@ -20,13 +20,13 @@ ansatz = ansatz('quarkonium', n_fermions=fermions, n_qubits=orbitals)
 
 options = {
     'shots':1024,
-    'ibmq':False,
+    'ibmq':True,
     'seed':10,
-    'backend':'aer_simulator_statevector', #qasm/aer/ibmq_something
+    'backend':'ibm_oslo', #qasm/aer/ibmq_something
     #'device':'ibm_nairobi' #to be simulated if using simulator
     }
 algorithm = Algorithm(options)
-optimizer = Minimizer('spsa', disp=False, max_iter=100)
+optimizer = Optimizer('', disp=False, max_iter=10)
 
 vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
 
@@ -34,12 +34,12 @@ import time
 start_time = time.time()
 
 eigs = []
-for i in range(100):
+for i in range(1):
     #ground state
     optimized_parameters = vqe.optimize_parameters(vqe.vqe_expval)
     eigenvalue = vqe.vqe_expval(optimized_parameters)
-    print(eigenvalue)
+    print("singlet:", eigenvalue + VSS(0), "triplet:", eigenvalue + VSS(1))
     eigs.append(eigenvalue)
 
-mpt.pyplot.hist(eigs)
+#mpt.pyplot.hist(eigs)
 print("--- %s seconds ---" % (time.time() - start_time))

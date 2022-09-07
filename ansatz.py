@@ -20,6 +20,8 @@ class ansatz:
         self.doubles = 0
         self.depth = depth
         self.method = method
+        if self.method != 'UCCSD' and (self.n_fermions != 1 or self.n_qubits != 3):
+            raise ValueError('This ansatz has a fixed number of fermions and orbitals')
         self.parameters = []
         self.mp2 = False
         
@@ -73,7 +75,7 @@ class ansatz:
     def UCCSD(self, qc, qb, theta):
         #generic UCC ansatz
 
-        qc.x(qb[0]) #prepare HartreeFock: put a particle in the first orbital
+        qc = self.HartreeFock(qc, qb) #prepare HartreeFock: put a particle in the first orbital
         k = 0
         
         #single excitations
@@ -91,7 +93,12 @@ class ansatz:
                             k += 1
         
         return qc
-                             
+    
+    def HartreeFock(self, qc, qb):
+        for i in range(self.n_fermions):
+            qc.x(qb[i])
+        return qc
+                       
     
     def pauli_sum_op_to_exp_op_circuit(self, qc, qb, pauli_sum_op, param):
         #from a PauliSumOp take each string (e.g. 'XYZ') and apply e^(param*string) to the circuit

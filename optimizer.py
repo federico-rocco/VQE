@@ -7,7 +7,7 @@ Created on Wed Jun 22 17:39:07 2022
 import numpy as np
 from qiskit.algorithms.optimizers import SPSA, COBYLA, CG, SLSQP 
 
-class Minimizer:
+class Optimizer:
     def __init__(self, 
                 method,
                 max_iter=200, # Minimizer iterations.
@@ -39,13 +39,14 @@ class Minimizer:
             
         if self.scipy == True:
             
-            from scipy.optimize import differential_evolution
+            from scipy.optimize import differential_evolution, minimize
             self.bounds = [(0,2*np.pi) for i in theta]
-            result = differential_evolution(loss_function,
-                              bounds=self.bounds,
-                              maxiter=self.max_iter,
-                              tol=self.tol,
-                              disp=self.disp)
+            result = minimize(loss_function,
+                                            theta,
+                                            bounds=self.bounds,
+                                            #maxiter=self.max_iter,
+                                            tol=self.tol)
+                                            #disp=self.disp)
                 
         else:
             result = self.opt.minimize(loss_function, theta)

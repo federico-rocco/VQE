@@ -10,13 +10,13 @@ from ansatz import ansatz
 from solver import Eigensolver, State
 from qiskit import Aer, IBMQ
 from algorithm import Algorithm
-from optimizer import Minimizer
+from optimizer import Optimizer
 from quarkonium import *
 
 
 coeffs = coeff()
 hamiltonian = Hamiltonian(fermions,orbitals,coeffs)
-ansatz = ansatz('UCCSD', n_fermions=fermions, n_qubits=orbitals)
+ansatz = ansatz('quarkonium', n_fermions=fermions, n_qubits=orbitals)
 
 options = {
     'shots':1024,
@@ -25,7 +25,7 @@ options = {
     'device':'ibm_nairobi' #to be simulated if using simulator
     }
 algorithm = Algorithm(options)
-optimizer = Minimizer('spsa', max_iter=100)
+optimizer = Optimizer('spsa', max_iter=100)
 
 vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
 

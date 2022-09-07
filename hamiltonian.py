@@ -19,14 +19,22 @@ class Hamiltonian:
         self.coeff = coeff
 
         
-    def __call__(self, ising=False): #h_ij*a+_i*a_j
+    def __call__(self, ising=False): 
     
         if ising == True:
             return self.isingH()
         
         h = 0
-        for m, n in [[_m, _n] for _m in range(self.n_qubits) for _n in range(self.n_qubits)]:
-             h +=mp.one_body(self.n_qubits, m, n, coeff=self.coeff[m][n])            
+        
+        #h_ij * a+_i * a_j
+        for i, j in [[_i, _j] for _i in range(self.n_qubits) for _j in range(self.n_qubits)]:
+             h += mp.one_body(self.n_qubits, i, j, coeff=self.coeff[0][i][j]) 
+        
+        #h_abij * a+_a * a+_b * a_i * a_j
+        if self.coeff[1] is not None: 
+            for i, j in [[_i, _j] for _j in range(self.n_qubits) for _i in range(_j)]:
+                 for a, b in [[_a, _b] for _b in range(self.n_qubits) for _a in range(_b)]:
+                     h += mp.two_body(self.n_qubits, a, b, i, j, coeff=self.coeff[1][a][b][i][j]) 
         h = h.reduce()
         
         pauli_list = []

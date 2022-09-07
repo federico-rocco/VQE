@@ -10,7 +10,7 @@ from ansatz import ansatz
 from solver import Eigensolver, State
 from qiskit import Aer, IBMQ
 from algorithm import Algorithm
-from optimizer import Minimizer
+from optimizer import Optimizer
 from quarkonium import *
 
 
@@ -25,41 +25,53 @@ options = {
     #'device':'ibm_nairobi' #to be simulated if using simulator
     }
 algorithm = Algorithm(options)
-optimizer = Minimizer('spsa', disp=False)
-
-vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
-
-
-#ground state
-optimized_parameters = vqe.optimize_parameters(vqe.vqe_expval)
-eigenvalue = vqe.vqe_expval(optimized_parameters)
-eigenstate = vqe.get_eigenstate(optimized_parameters)
-vqe.save_state(State(eigenvalue, eigenstate, optimized_parameters))
-print("Ground state")
-print("Energy: ", eigenvalue)
-print("Eigenstate: ", eigenstate)
-print("------------------------")
+optimizer = Optimizer('spsa', disp=False)
 
 
 
-#first excited
-optimized_parameters = vqe.optimize_parameters(vqe.expval_excited_state)
-eigenvalue = vqe.vqe_expval(optimized_parameters)
-eigenstate = vqe.get_eigenstate(optimized_parameters)
-vqe.save_state(State(eigenvalue, eigenstate, optimized_parameters))
-print("First excited state")
-print("Energy: ", eigenvalue)
-print("Eigenstate: ", eigenstate)
-print("------------------------")
+wrong = 0
 
-
-
-#second excited
-optimized_parameters = vqe.optimize_parameters(vqe.expval_excited_state)
-eigenvalue = vqe.vqe_expval(optimized_parameters)
-eigenstate = vqe.get_eigenstate(optimized_parameters)
-vqe.save_state(State(eigenvalue, eigenstate, optimized_parameters))
-print("Second excited state state")
-print("Energy: ", eigenvalue)
-print("Eigenstate: ", eigenstate)
-print("------------------------")
+for i in range(100):
+    
+    vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
+    
+    #ground state
+    optimized_parameters = vqe.optimize_parameters(vqe.vqe_expval)
+    eigenvalue = vqe.vqe_expval(optimized_parameters)
+    eigenstate = vqe.get_eigenstate(optimized_parameters)
+    vqe.save_state(State(eigenvalue, eigenstate, optimized_parameters))
+    print("Ground state")
+    print("Energy: ", eigenvalue)
+    print("Eigenstate: ", eigenstate)
+    print("------------------------")
+    
+    
+    
+    #first excited
+    optimized_parameters1 = vqe.optimize_parameters(vqe.expval_excited_state)
+    eigenvalue1 = vqe.vqe_expval(optimized_parameters1)
+    eigenstate1 = vqe.get_eigenstate(optimized_parameters1)
+    vqe.save_state(State(eigenvalue1, eigenstate1, optimized_parameters1))
+    print("First excited state")
+    print("Energy: ", eigenvalue)
+    print("Eigenstate: ", eigenstate)
+    print("------------------------")
+    
+    
+    
+    #second excited
+    optimized_parameters2 = vqe.optimize_parameters(vqe.expval_excited_state)
+    eigenvalue2 = vqe.vqe_expval(optimized_parameters2)
+    eigenstate2 = vqe.get_eigenstate(optimized_parameters2)
+    vqe.save_state(State(eigenvalue2, eigenstate2, optimized_parameters2))
+    print("Second excited state state")
+    print("Energy: ", eigenvalue)
+    print("Eigenstate: ", eigenstate)
+    print("------------------------")
+    
+    if eigenvalue1 > eigenvalue2:
+        wrong += 1
+        
+    print(vqe.solved_states)
+        
+print(wrong)

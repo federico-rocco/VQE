@@ -8,6 +8,7 @@ Created on Wed Jun 22 12:18:37 2022
 from qiskit import QuantumCircuit, transpile
 from qiskit.tools.monitor import job_monitor
 from qiskit.providers.aer.noise import NoiseModel
+
 import qiskit as qk
 import numpy as np
 
@@ -26,7 +27,11 @@ class Algorithm:
         
         if self.ibmq == True:
             provider = qk.IBMQ.load_account()
-            self.backend = provider.get_backend(options.get('backend'))
+            if options.get('backend')=='least busy':
+                from qiskit.providers.ibmq import least_busy
+                self.backend = least_busy(provider.backends(filters=lambda x: x.configuration().n_qubits >= 3 and not x.configuration().simulator and x.status().operational==True))
+            else:
+                self.backend = provider.get_backend(options.get('backend'))
             self.monitor = job_monitor
 
             

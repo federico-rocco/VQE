@@ -9,11 +9,13 @@ import scipy as sp
 import mpmath
 
 
-k=0.4063 #4/3*αs 
-sigma=441.6**2 #MeV^2
-mu=637.5
-omega=562.9
-b=1/np.sqrt(mu*omega)
+αs = 0.3047
+k = 4/3*αs 
+sigma = 441.6**2 #MeV^2
+mu = 637.5
+omega = 562.9
+b = 1/np.sqrt(mu*omega)
+mq = 1317 #MeV
 orbitals = 3
 fermions = 1
 
@@ -43,8 +45,12 @@ def V(m,n):
     return -k*r_inv(m,n)+sigma*r(m,n)
 
 
+def VSS(S):
+    return (16*np.pi*αs/(9*mq**2))*(S**2-3/2)
+
+
 def coeff():
     coeff = np.zeros((orbitals, orbitals))
     for m, n in [[_m, _n] for _m in range(orbitals) for _n in range(orbitals)]:
         coeff[m][n] += T(m,n) + V(m,n)
-    return coeff
+    return [coeff,None]

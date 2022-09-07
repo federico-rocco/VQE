@@ -58,9 +58,7 @@ class Eigensolver:
             
         grad = Gradient(grad_method='lin_comb').convert(operator=operator, params=theta)
         qi_sv = QuantumInstance(backend=self.algorithm.backend,
-                        shots=self.algorithm.shots,
-                        seed_simulator=2,
-                        seed_transpiler=2) 
+                        shots=self.algorithm.shots) 
         vqe = VQE(ansatz, optimizer=self.optimizer.opt, gradient=grad, quantum_instance=qi_sv)
         return vqe.compute_minimum_eigenvalue(hamiltonian)
     
@@ -128,10 +126,10 @@ class Eigensolver:
         
         
     def find_delta(self):
-        delta = 0
+        delta = 0 #8715
         for pauli in self.hamiltonian:
             delta += 2*abs(pauli.coeff)
-        return delta/1000
+        return delta/15
    
     def expval_excited_state(self, theta_k):
         #https://arxiv.org/pdf/1805.08138.pdf
