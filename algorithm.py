@@ -11,6 +11,9 @@ from qiskit.providers.aer.noise import NoiseModel
 
 import qiskit as qk
 import numpy as np
+from qiskit.providers.aer import noise
+
+
 
 
 class Algorithm:
@@ -21,7 +24,8 @@ class Algorithm:
                             else options.get('shots')
         self.seed = np.random.randint(0,100000) if options.get('seed') == None\
                             else options.get('seed')        
-        self.ibmq = options.get('ibmq')        
+        self.ibmq = options.get('ibmq') 
+        self.noise_model, self.coupling_map, self.basis_gates = None, None, None
 
         
         
@@ -38,25 +42,30 @@ class Algorithm:
         else:
             if options.get('backend') == None:
                 options['backend'] = 'qasm_simulator' 
-            self.backend = qk.Aer.get_backend(options['backend'])            
-            
+            self.backend = qk.Aer.get_backend(options['backend'])
 
             
-            self.noise_model, self.coupling_map, self.basis_gates = None, None, None
+            
             if options.get('device') != None: #simulate a real device
-                device = options.get('device')
                 provider = qk.IBMQ.load_account()
-                backend = provider.get_backend(device)                
-                self.noise_model = NoiseModel.from_backend(backend)
-                self.coupling_map = backend.configuration().coupling_map
-                self.basis_gates = self.noise_model.basis_gates
+                name_device = options.get('device')
+                device = provider.get_backend(name_device)                   
+                
+                self.noise_model = NoiseModel.from_backend(device)
+                self.backend_properties = device.properties()
+                self.coupling_map = device.configuration().coupling_map
+                self.basis_gates = device.configuration().basis_gates
+                self.transpiler = device
 
     
-    def measure(self, qc, qb, cb, n=0):
-        
-        #qc = transpile(qc, qk.Aer.get_backend('aer_simulator_statevector'), optimization_level=3)
-   
-        qc.measure(qb,cb)
+    def measure(self, qc, qb, cb):
+         
+        qc.measure(qb, cb)
+            
+        #if self.noise_model is not None:
+            #qc = transpile(qc, 
+                           #backend=self.transpiler)
+            #print("then",qc.depth(),qc.size())
         
         if self.ibmq:
             job = qk.execute(qc, 
@@ -70,9 +79,9 @@ class Algorithm:
                             shots=self.shots,
                             seed_transpiler=self.seed,
                             seed_simulator=self.seed,
-                            noise_model=self.noise_model,
-                            coupling_map=self.coupling_map,
-                            basis_gates=self.basis_gates)
+                            noise_model=self.noise_model)
+                            #coupling_map=self.coupling_map,
+                            #basis_gates=self.basis_gates)
             """
                             optimization_level=self.optimization_level,
                             ,

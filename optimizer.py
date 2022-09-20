@@ -41,8 +41,8 @@ class Optimizer:
             
             from scipy.optimize import differential_evolution, minimize
             self.bounds = [(0,2*np.pi) for i in theta]
-            result = minimize(loss_function,
-                                            theta,
+            result = differential_evolution(loss_function,
+                                            #theta,
                                             bounds=self.bounds,
                                             #maxiter=self.max_iter,
                                             tol=self.tol)

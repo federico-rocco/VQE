@@ -13,17 +13,15 @@ from qiskit import QuantumCircuit, QuantumRegister
 
 class ansatz:
     
-    def __init__(self, method, n_fermions=None, n_qubits=None, depth=1):
+    def __init__(self, method, n_fermions=None, n_qubits=None, depth=1, mp2=False):
         self.n_fermions = n_fermions
         self.n_qubits = n_qubits
         self.singles = 0
         self.doubles = 0
         self.depth = depth
         self.method = method
-        if self.method != 'UCCSD' and (self.n_fermions != 1 or self.n_qubits != 3):
-            raise ValueError('This ansatz has a fixed number of fermions and orbitals')
         self.parameters = []
-        self.mp2 = False
+        self.mp2 = mp2
         
         
     def __call__(self,qc,qb,theta=None,qa=None,i=None):

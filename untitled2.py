@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Sep  2 17:30:47 2022
-
-@author: cosmo
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jul 20 19:22:37 2022
+Created on Tue Sep 13 15:44:42 2022
 
 @author: cosmo
 """
@@ -31,7 +24,7 @@ options = {
     'shots':1024,
     'ibmq':True,
     'seed':10,
-    'backend':'ibmq_belem', #qasm/aer/ibmq_something
+    'backend':'ibm_oslo', #qasm/aer/ibmq_something
     #'device':'ibm_nairobi' #to be simulated if using simulator
     }
 algorithm = Algorithm(options)
@@ -40,15 +33,13 @@ optimizer = Optimizer('spsa', disp=False, max_iter=1000)
 import time
 start_time = time.time()
 
-
-for n_folding in range(5):
     
-    vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
-    vqe.set_folding(n_folding)
-    #ground state
-    #optimized_parameters = vqe.optimize_parameters(vqe.vqe_expval)
-    eigenvalue = vqe.vqe_qiskit().optimal_value
-    print("folding: ", n_folding, "result:", eigenvalue )
+vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
+
+#ground state
+#optimized_parameters = vqe.optimize_parameters(vqe.vqe_expval)
+eigenvalue = vqe.vqe_qiskit().optimal_value
+print("result:", eigenvalue )
     
 
 #mpt.pyplot.hist(eigs)

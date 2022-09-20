@@ -16,17 +16,17 @@ import matplotlib as mpt
 
 coeffs = coeff()
 hamiltonian = Hamiltonian(fermions,orbitals,coeffs)
-ansatz = ansatz('quarkonium', n_fermions=fermions, n_qubits=orbitals)
+ansatz = ansatz('UCCSD', n_fermions=fermions, n_qubits=orbitals, mp2=False)
 
 options = {
     'shots':1024,
-    'ibmq':True,
-    'seed':10,
-    'backend':'ibm_oslo', #qasm/aer/ibmq_something
+    'ibmq':False,
+    'seed':1,
+    'backend':'qasm_simulator', #qasm/aer/ibmq_something
     #'device':'ibm_nairobi' #to be simulated if using simulator
     }
 algorithm = Algorithm(options)
-optimizer = Optimizer('', disp=False, max_iter=10)
+optimizer = Optimizer('spsa', disp=False, max_iter=1000)
 
 vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
 

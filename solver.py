@@ -13,6 +13,7 @@ from qiskit.utils import QuantumInstance
 from qiskit.opflow import StateFn
 from qiskit.opflow.gradients import Gradient
 from qiskit.circuit import ParameterVector, Parameter
+from folding import circuit_folding, gate_folding
 import numpy as np
 import copy
 
@@ -35,7 +36,8 @@ class Eigensolver:
         self.algorithm = algorithm
         self.optimizer = optimizer
         self.solved_states = []
-        self.n_folding = 0
+        self.n_folding = 1
+        self.factor = 1
         
         
 
@@ -48,6 +50,7 @@ class Eigensolver:
         qc = QuantumCircuit(qb)
         theta = ParameterVector('Θ', self.ansatz.singles + self.ansatz.doubles) #qiskit requires a parametrized ansatz
         ansatz = self.ansatz(qc, qb, theta=theta)
+        ansatz = circuit_folding(ansatz, scaling=self.n_folding)
         
         #operator = sum <H|psi>
         operator = 0
@@ -78,21 +81,14 @@ class Eigensolver:
             qc = QuantumCircuit(qb, cb)
             qc = ansatz_qc + qc
             qc = pauli.pauli_to_qc(qc, qb) #the piece of hamiltonian acts on psi
-            qc = self.fold(qc) #extend the circuit in case of noise extrapolation
+            qc = gate_folding(qc, scaling=self.n_folding) #extend the circuit in case of noise extrapolation
             measurement = self.algorithm.measure(qc, qb, cb) #measure the circuit
             expectation = pauli.expectation(measurement, self.algorithm.shots) #using relative frequencies compute exp_value
             E += pauli.coeff*expectation
 
         return E
     
-    def fold(self, qc):
-        #U ---> U*(Udagger * U)^n where U is a unitary circuit
-        
-        qc0 = copy.deepcopy(qc)
-        qc_inv = qc.inverse()
-        for i in range(self.n_folding):
-            qc += (qc_inv + qc0)   
-        return qc
+    
     
     def set_folding(self, n):
         self.n_folding = n
@@ -108,6 +104,8 @@ class Eigensolver:
         cb = ClassicalRegister(self.n_qubits)
         qc = QuantumCircuit(qb, cb)
         qc = self.ansatz(qc, qb, theta)
+        self.n_folding=5
+        qc=self.fold(qc)
         measurement = self.algorithm.measure(qc, qb, cb)
         return measurement
             
@@ -129,7 +127,7 @@ class Eigensolver:
         delta = 0 #8715
         for pauli in self.hamiltonian:
             delta += 2*abs(pauli.coeff)
-        return delta/15
+        return delta/self.factor
    
     def expval_excited_state(self, theta_k):
         #https://arxiv.org/pdf/1805.08138.pdf
@@ -153,10 +151,8 @@ class Eigensolver:
             
             measurement = self.algorithm.measure(new_qc, qb, cb)
 
-            zero = '0'
-            for q in range(self.n_qubits-1):
-                zero += '0'
-            if zero in measurement:
+            zero = '0'*self.n_qubits
+            if '0'*self.n_qubits in measurement:
                 overlap += measurement[zero] 
                 #|<ψ(Θi)|ψ(Θk)>|^2 = |<0|ψ(Θi)^-1 ψ(Θk)|0>|^2
                 #so we just count the all '0' qubits
