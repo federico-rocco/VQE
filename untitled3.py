@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Created on Sun Sep 25 18:38:09 2022
+
+@author: cosmo
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Fri Sep  2 17:30:47 2022
 
 @author: cosmo
@@ -21,6 +28,7 @@ from optimizer import Optimizer
 from quarkonium import *
 import matplotlib as mpt
 import copy 
+from qiskit.opflow import StateFn
 
 
 coeffs = coeff()
@@ -28,28 +36,20 @@ hamiltonian = Hamiltonian(fermions,orbitals,coeffs)
 ansatz = ansatz('quarkonium', n_fermions=fermions, n_qubits=orbitals)
 
 options = {
-    'shots':1024,
+    'shots':10**5,
     'ibmq':False,
     'seed':10,
     'backend':'qasm_simulator', #qasm/aer/ibmq_something
-    'device':'ibmq_athens' #to be simulated if using simulator
+    #'device':'ibmq_athens' #to be simulated if using simulator
     }
 algorithm = Algorithm(options)
-optimizer = Optimizer('spsa', disp=False, max_iter=50)
-
-import time
-start_time = time.time()
-
-
-for n_folding in range(5):
-    
-    vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
-    vqe.set_folding(n_folding)
-    #ground state
-    #optimized_parameters = vqe.optimize_parameters(vqe.vqe_expval)
-    eigenvalue = vqe.vqe_qiskit().optimal_value
-    print("folding: ", n_folding, "result:", eigenvalue )
-    
-
-#mpt.pyplot.hist(eigs)
-print("--- %s seconds ---" % (time.time() - start_time))
+optimizer = Optimizer('spsa', disp=False, max_iter=1000)
+vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
+#print('my:',vqe.vqe_expval([4.61094861, 0.13099029]))
+#print('qiskit:',vqe.vqe_qiskit())
+params = [4.6106692 , 6.44062144]
+aqc = vqe.get_ansatz(params)
+operator = 0
+for pauli in hamiltonian():
+    operator += ~StateFn(pauli.pauli.to_pauli_op())@StateFn(aqc)
+print('qiskit:', operator.eval(), 'my:', vqe.expval(params))

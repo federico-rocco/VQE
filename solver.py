@@ -16,7 +16,7 @@ from qiskit.circuit import ParameterVector, Parameter
 from folding import circuit_folding, gate_folding
 import numpy as np
 import copy
-
+from qiskit.opflow import PauliExpectation
 
 
         
@@ -62,11 +62,11 @@ class Eigensolver:
         grad = Gradient(grad_method='lin_comb').convert(operator=operator, params=theta)
         qi_sv = QuantumInstance(backend=self.algorithm.backend,
                         shots=self.algorithm.shots) 
-        vqe = VQE(ansatz, optimizer=self.optimizer.opt, gradient=grad, quantum_instance=qi_sv)
+        vqe = VQE(ansatz, optimizer=self.optimizer.opt, quantum_instance=qi_sv, gradient=grad)
         return vqe.compute_minimum_eigenvalue(hamiltonian)
     
 
-    def vqe_expval(self, theta=None):
+    def expval(self, theta=None):
         #self-made eigensolver, not using qiskit
         #build ansatz, then add a term of the hamiltonian at a time and compute the
         #expectation value <psi|H|psi>
@@ -75,20 +75,35 @@ class Eigensolver:
         cb = ClassicalRegister(self.n_qubits)
         qc = QuantumCircuit(qb)
         ansatz_qc = self.ansatz(qc, qb, theta)
+        ansatz_qc = circuit_folding(ansatz_qc, scaling=self.n_folding) #extend the circuit in case of noise extrapolation
 
         E = 0
         for pauli in self.hamiltonian:
             qc = QuantumCircuit(qb, cb)
-            qc = ansatz_qc + qc
+            qc = qc.compose(ansatz_qc) 
             qc = pauli.pauli_to_qc(qc, qb) #the piece of hamiltonian acts on psi
-            qc = gate_folding(qc, scaling=self.n_folding) #extend the circuit in case of noise extrapolation
             measurement = self.algorithm.measure(qc, qb, cb) #measure the circuit
             expectation = pauli.expectation(measurement, self.algorithm.shots) #using relative frequencies compute exp_value
             E += pauli.coeff*expectation
 
         return E
     
-    
+    def analytic_expval(self, theta=None):
+        #build ansatz, then add a term of the hamiltonian at a time and compute the
+        #expectation value <psi|H|psi> analytically using qiskit tools
+        
+        qb = QuantumRegister(self.n_qubits)
+        qc = QuantumCircuit(qb)
+        ansatz_qc = self.ansatz(qc, qb, theta)
+        ansatz_qc = circuit_folding(ansatz_qc, scaling=self.n_folding) #extend the circuit in case of noise extrapolation
+
+        E = 0
+        for pauli in self.hamiltonian:
+            expectation = ~StateFn(pauli.pauli.to_pauli_op())@StateFn(ansatz_qc)
+            E += expectation.eval().real
+
+        return E
+        
     
     def set_folding(self, n):
         self.n_folding = n
@@ -117,6 +132,13 @@ class Eigensolver:
         ansatz_qc = self.ansatz(qc, qb, theta)
         measurement = self.algorithm.measure(ansatz_qc, qb, cb)
         return measurement
+    
+    def get_ansatz(self, theta=None) :       
+        qb = QuantumRegister(self.n_qubits)
+        qc = QuantumCircuit(qb)
+
+        ansatz_qc = self.ansatz(qc, qb, theta)
+        return ansatz_qc
 
 
     def save_state(self, state):
@@ -157,7 +179,7 @@ class Eigensolver:
                 #|<ψ(Θi)|ψ(Θk)>|^2 = |<0|ψ(Θi)^-1 ψ(Θk)|0>|^2
                 #so we just count the all '0' qubits
 
-        return self.find_delta()*overlap + self.vqe_expval(theta_k)
+        return self.find_delta()*overlap + self.expval(theta_k)
 
 
         

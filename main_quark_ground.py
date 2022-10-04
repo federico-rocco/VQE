@@ -19,7 +19,7 @@ hamiltonian = Hamiltonian(fermions,orbitals,coeffs)
 ansatz = ansatz('UCCSD', n_fermions=fermions, n_qubits=orbitals, mp2=False)
 
 options = {
-    'shots':1024,
+    'shots':1024*10**3,
     'ibmq':False,
     'seed':1,
     'backend':'qasm_simulator', #qasm/aer/ibmq_something
@@ -36,9 +36,11 @@ start_time = time.time()
 eigs = []
 for i in range(1):
     #ground state
-    optimized_parameters = vqe.optimize_parameters(vqe.vqe_expval)
-    eigenvalue = vqe.vqe_expval(optimized_parameters)
+    optimized_parameters = vqe.optimize_parameters(vqe.expval)
+    eigenvalue = vqe.expval(optimized_parameters)
+    print("spin averaged:", eigenvalue)
     print("singlet:", eigenvalue + VSS(0), "triplet:", eigenvalue + VSS(1))
+    print("ηc:", eigenvalue + VSS(0) + 2*mc, "J/Ψ:", eigenvalue + VSS(1) + 2*mc)
     eigs.append(eigenvalue)
 
 #mpt.pyplot.hist(eigs)

@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Sep 13 15:44:42 2022
+Created on Fri Sep 23 16:12:42 2022
+
+@author: cosmo
+"""
+
+# -*- coding: utf-8 -*-
+"""
+Created on Thu May 12 10:59:48 2022
 
 @author: cosmo
 """
@@ -26,34 +33,11 @@ options = {
     'shots':1024,
     'ibmq':False,
     'backend':'qasm_simulator', #qasm/aer/ibmq_something
-    'device':'ibmq_athens' #to be simulated if using simulator
+    #'device':'ibmq_athens' #to be simulated if using simulator
     }
 algorithm = Algorithm(options)
 optimizer = Optimizer('spsa', max_iter=100)
 vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
-optimized_parameters = vqe.optimize_parameters(vqe.vqe_expval)
-
-
-import time
-start_time = time.time()
-x = []
-y = []
-
-for lamda in range(1,6,1):
-    x.append(lamda)
-    print("lamda = ", lamda)
-    vqe.set_folding(lamda)
-    energy = vqe.vqe_expval(optimized_parameters)
-    y.append(energy)
-    print("Optimized energy: ", energy)
-    
-    print("------------------------")
-
-b, m = np.polynomial.polynomial.polyfit(x, y, 1, rcond=None, full=False)
-x = np.array(x)
-plt.plot(x, m*x + b)
-plt.scatter(x, y)
-plt.show()
-
-
-print("--- %s seconds ---" % (time.time() - start_time))
+optimized_parameters = [3.31,0.95]
+energy = vqe.vqe_expval()
+print(energy)

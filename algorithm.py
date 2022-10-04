@@ -13,8 +13,8 @@ import qiskit as qk
 import numpy as np
 from qiskit.providers.aer import noise
 
-
-
+import pickle
+import os
 
 class Algorithm:
     #handles execution
@@ -49,22 +49,31 @@ class Algorithm:
             if options.get('device') != None: #simulate a real device
                 provider = qk.IBMQ.load_account()
                 name_device = options.get('device')
-                device = provider.get_backend(name_device)                   
                 
-                self.noise_model = NoiseModel.from_backend(device)
-                self.backend_properties = device.properties()
-                self.coupling_map = device.configuration().coupling_map
-                self.basis_gates = device.configuration().basis_gates
-                self.transpiler = device
+                try:
+                    __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+                    self.noise_model = NoiseModel.from_dict(pickle.load(open(__location__+'/noise_models/'+name_device+'.pkl','rb')))
+                    self.basis_gates = self.noise_model.basis_gates
+                    
+                except FileNotFoundError:
+                    device = provider.get_backend(name_device)                   
+                    self.noise_model = NoiseModel.from_backend(device)
+                    self.backend_properties = device.properties()
+                    self.coupling_map = device.configuration().coupling_map
+                    self.basis_gates = self.noise_model.basis_gates
+                    self.transpiler = device
 
     
     def measure(self, qc, qb, cb):
          
         qc.measure(qb, cb)
             
-        #if self.noise_model is not None:
-            #qc = transpile(qc, 
-                           #backend=self.transpiler)
+        if self.noise_model is not None:
+            qc = transpile(qc,   
+                           #backend=self.noise_model,
+                           #backend_properties=self.backend_properties,
+                           #coupling_map=self.coupling_map,
+                           basis_gates=self.basis_gates)
             #print("then",qc.depth(),qc.size())
         
         if self.ibmq:

@@ -36,11 +36,12 @@ class Hamiltonian:
                  for a, b in [[_a, _b] for _b in range(self.n_qubits) for _a in range(_b)]:
                      h += mp.two_body(self.n_qubits, a, b, i, j, coeff=self.coeff[1][a][b][i][j]) 
         h = h.reduce()
-        
         pauli_list = []
         for pauli_sum_op in h:
+            
             pauli_op = pauli_sum_op.to_pauli_op()
-            pauli_list.append(Pauli(pauli_op))
+            if True:#str(pauli_op.primitive)=='XXI':
+                pauli_list.append(Pauli(pauli_op))
 
         
         return pauli_list
@@ -99,11 +100,30 @@ class Pauli: #PauliOp with metods
         
     def pauli_to_qc(self, qc, qb):
         #basis change 
-        for i, item in enumerate(self.pauli_string):
-            if item == 'X':
+        pauli_string = self.pauli_string[::-1]
+        for i, item in enumerate(pauli_string):
+            if pauli_string[i] == 'X':
                 qc.h(qb[i])
-            elif item == 'Y':
-                qc.rx(-np.pi/2, qb[i])
+                
+            elif pauli_string[i] == 'Y':
+                qc.h(qb[i])
+                qc.sdg(qb[i])
+                
+        return qc
+    
+    def apply_ham(self, qc, qb):
+        #basis change 
+        pauli_string = self.pauli_string[::-1]
+        for i, item in enumerate(pauli_string):
+            if pauli_string[i] == 'X':
+                qc.x(qb[i])
+                
+            elif pauli_string[i] == 'Y':
+                qc.y(qb[i])
+                
+            elif pauli_string[i] == 'Z':
+                qc.z(qb[i])
+                
         return qc
     
     def expectation(self, measurement, shots):
@@ -116,6 +136,7 @@ class Pauli: #PauliOp with metods
                 if (number == '1' and self.pauli_string[i] != 'I'):
                     sign *= -1 
             exp_value += sign * value/shots
+            #print(state,value,sign * value/shots)
         return exp_value
 
     
