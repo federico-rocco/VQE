@@ -22,7 +22,7 @@ start_time = time.time()
 
 coeffs = coeff('charmonium')
 hamiltonian = Hamiltonian(fermions,orbitals,coeffs)
-ansatz = ansatz('UCCSD', n_fermions=fermions, n_qubits=orbitals)
+ansatz = ansatz('quarkonium', n_fermions=fermions, n_qubits=orbitals)
 
 
 options = {
@@ -30,12 +30,12 @@ options = {
     'shots':1024*10,
     'ibmq':False,
     'backend':'qasm_simulator', #qasm/aer/ibmq_something
-    'device':'ibmq_athens' #to be simulated if using simulator
+    'device':'ibm_nairobi' #to be simulated if using simulator
     }
 algorithm = Algorithm(options)
 optimizer = Optimizer('spsa', max_iter=200)
 vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
-optimized_parameters = vqe.optimize_parameters(vqe.expval)
+optimized_parameters = [1.65778537, 3.27087804]#vqe.optimize_parameters(vqe.expval)
 
 
 

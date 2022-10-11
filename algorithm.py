@@ -19,13 +19,14 @@ import os
 class Algorithm:
     #handles execution
     
-    def __init__(self, options):
+    def __init__(self, options, n_qubits=3):
         self.shots = 1024 if options.get('shots') == None\
                             else options.get('shots')
         self.seed = np.random.randint(0,100000) if options.get('seed') == None\
                             else options.get('seed')        
         self.ibmq = options.get('ibmq') 
         self.noise_model, self.coupling_map, self.basis_gates = None, None, None
+        self.n_qubits = n_qubits
 
         
         
@@ -33,7 +34,7 @@ class Algorithm:
             provider = qk.IBMQ.load_account()
             if options.get('backend')=='least busy':
                 from qiskit.providers.ibmq import least_busy
-                self.backend = least_busy(provider.backends(filters=lambda x: x.configuration().n_qubits >= 3 and not x.configuration().simulator and x.status().operational==True))
+                self.backend = least_busy(provider.backends(filters=lambda x: x.configuration().n_qubits >= self.n_qubits and not x.configuration().simulator and x.status().operational==True))
             else:
                 self.backend = provider.get_backend(options.get('backend'))
             self.monitor = job_monitor
@@ -70,11 +71,12 @@ class Algorithm:
             
         if self.noise_model is not None:
             qc = transpile(qc,   
-                           #backend=self.noise_model,
+                           backend=self.backend,
                            #backend_properties=self.backend_properties,
                            #coupling_map=self.coupling_map,
                            basis_gates=self.basis_gates)
-            #print("then",qc.depth(),qc.size())
+            #print(qc)
+            
         
         if self.ibmq:
             job = qk.execute(qc, 

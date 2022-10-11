@@ -11,7 +11,7 @@ from qiskit import QuantumCircuit, QuantumRegister
 
 
 
-class ansatz:
+class Ansatz:
     
     def __init__(self, method, n_fermions=None, n_qubits=None, depth=1, mp2=False):
         self.n_fermions = n_fermions

@@ -6,27 +6,30 @@ Created on Wed Jul 20 19:22:37 2022
 """
 
 from hamiltonian import Hamiltonian
-from ansatz import ansatz
+from ansatz import Ansatz
 from solver import Eigensolver, State
 from qiskit import Aer, IBMQ
 from algorithm import Algorithm
 from optimizer import Optimizer
-from quarkonium import *
+from quarkonium import Quarkonium
 import matplotlib as mpt
 
-coeffs = coeff()
+fermions = 1
+orbitals = 3
+model = Quarkonium('charmonium')
+coeffs = model.coeff(orbitals)
 hamiltonian = Hamiltonian(fermions,orbitals,coeffs)
-ansatz = ansatz('UCCSD', n_fermions=fermions, n_qubits=orbitals, mp2=False)
+ansatz = Ansatz('quarkonium', n_fermions=fermions, n_qubits=orbitals, mp2=False)
 
 options = {
-    'shots':1024*10**3,
+    'shots':1024*100,
     'ibmq':False,
     'seed':1,
     'backend':'qasm_simulator', #qasm/aer/ibmq_something
     #'device':'ibm_nairobi' #to be simulated if using simulator
     }
 algorithm = Algorithm(options)
-optimizer = Optimizer('spsa', disp=False, max_iter=1000)
+optimizer = Optimizer('spsa', disp=False, max_iter=200)
 
 vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
 
@@ -36,12 +39,16 @@ start_time = time.time()
 eigs = []
 for i in range(1):
     #ground state
-    optimized_parameters = vqe.optimize_parameters(vqe.expval)
+    optimized_parameters = vqe.optimize_parameters(vqe.analytic_expval)
+    
     eigenvalue = vqe.expval(optimized_parameters)
-    print("spin averaged:", eigenvalue)
-    print("singlet:", eigenvalue + VSS(0), "triplet:", eigenvalue + VSS(1))
-    print("ηc:", eigenvalue + VSS(0) + 2*mc, "J/Ψ:", eigenvalue + VSS(1) + 2*mc)
+    print("spin averaged:", eigenvalue + 2*model.mq)
+    print("singlet:", eigenvalue + model.VSS(0), "triplet:", eigenvalue + model.VSS(1))
+    print("ηc:", eigenvalue + model.VSS(0) + 2*model.mq, "J/Ψ:", eigenvalue + model.VSS(1) + 2*model.mq)
     eigs.append(eigenvalue)
+    
 
 #mpt.pyplot.hist(eigs)
 print("--- %s seconds ---" % (time.time() - start_time))
+
+print(model.VSS(1)-model.VSS(0))
