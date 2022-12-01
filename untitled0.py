@@ -1,43 +1,71 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Sep 23 16:12:42 2022
-
-@author: cosmo
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Thu May 12 10:59:48 2022
+Created on Fri Nov 18 12:33:48 2022
 
 @author: cosmo
 """
 
 from hamiltonian import Hamiltonian
-from ansatz import ansatz
+from ansatz import Ansatz
 from solver import Eigensolver, State
 from qiskit import Aer, IBMQ
 from algorithm import Algorithm
 from optimizer import Optimizer
-from quarkonium import *
+from quarkoniumpaper import Quarkonium
+import matplotlib
+from matplotlib import pyplot as plt
+from scipy.optimize import root
 import numpy as np
-import matplotlib.pyplot as plt
-import os
 
-coeffs = coeff()
+
+fermions = 1
+orbitals = 3
+flavours = ['charmonium']
+model = Quarkonium('charmonium')
+coeffs = model.coeff(orbitals)
 hamiltonian = Hamiltonian(fermions,orbitals,coeffs)
-ansatz = ansatz('quarkonium', n_fermions=fermions, n_qubits=orbitals)
-
-
+ansatz = Ansatz('quarkonium', n_fermions=fermions, n_qubits=orbitals, mp2=False)
+optimizer = Optimizer('cobyla', disp=True, max_iter=1000)
 options = {
-    'seed':1,
     'shots':1024,
     'ibmq':False,
+    'seed':1,
     'backend':'qasm_simulator', #qasm/aer/ibmq_something
-    #'device':'ibmq_athens' #to be simulated if using simulator
+    #'device':'ibm_nairobi' #to be simulated if using simulator
     }
 algorithm = Algorithm(options)
-optimizer = Optimizer('spsa', max_iter=100)
+    
 vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
-optimized_parameters = [3.31,0.95]
-energy = vqe.vqe_expval()
-print(energy)
+optimized_parameters = vqe.optimize_parameters(vqe.analytic_expval)
+analytic = vqe.analytic_expval(optimized_parameters)
+print(analytic)
+
+x=[]
+y=[]
+ran = np.logspace(3, 6, num=20)
+for shots in ran:
+
+    print('doing ', shots)
+    options = {
+        'shots':shots,
+        'ibmq':False,
+        'seed':1,
+        'backend':'qasm_simulator', #qasm/aer/ibmq_something
+        #'device':'ibm_nairobi' #to be simulated if using simulator
+        }
+    algorithm = Algorithm(options)
+        
+    vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(), optimizer, algorithm)
+    eigenvalue = vqe.expval(optimized_parameters)
+    
+    x.append(shots)
+    y.append(eigenvalue)
+    print(shots,eigenvalue)
+    
+plt.scatter(x,y, marker='.')
+#plt.grid()
+plt.xscale("log")
+plt.axhline(y=analytic, color='black', linestyle='dashed')
+plt.ylabel('Energy [MeV]')
+plt.xlabel('Number of shots')
+plt.show()

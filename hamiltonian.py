@@ -59,7 +59,7 @@ class Hamiltonian:
                     label_nn += "I"
                     
             op_nn = Pauli(qiskit.opflow.PauliOp(qiskit.quantum_info.Pauli(label_nn)))
-            op_nn.coeff = -self.coeff['B']/2
+            op_nn.coeff = -self.coeff['B']
             pauli_list.append(op_nn)
             
          
@@ -82,7 +82,7 @@ class Hamiltonian:
                         label_lat += "I"
                     
             op_lat = Pauli(qiskit.opflow.PauliOp(qiskit.quantum_info.Pauli(label_lat)))
-            op_lat.coeff = -self.coeff['J']/4
+            op_lat.coeff = -self.coeff['J']
             pauli_list.append(op_lat)
             
         

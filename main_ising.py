@@ -13,7 +13,7 @@ Created on Wed Jul 20 19:22:37 2022
 """
 
 from hamiltonian import Hamiltonian
-from ansatz import ansatz
+from ansatz import Ansatz
 from solver import Eigensolver
 from algorithm import Algorithm
 from optimizer import Optimizer
@@ -22,75 +22,49 @@ import matplotlib.pyplot as plt
 
 orbitals = 3
 fermions = 0
-B = 0.1
+x=[]
+y=[]
 J = 1
-ising_coeff = {'B':B,
-               'J':J
-               }
-hamiltonian = Hamiltonian(n_qubits=orbitals, coeff=ising_coeff)
-ansatz = ansatz('ising', n_qubits=orbitals)
-
-options = {
-    'shots':1024,
-    'ibmq':False,
-    'seed':10,
-    'backend':'qasm_simulator', #qasm/aer/ibmq_something
-    'device':'ibm_nairobi' #to be simulated if using simulator
-    }
-algorithm = Algorithm(options)
-optimizer = Optimizer('spsa', disp=False, max_iter=100)
-vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(ising=True), optimizer, algorithm)
-"""
-import time
-start_time = time.time()
+xs = (x * 0.1 for x in range(0, 30))
+for B in xs:
 
 
-
-#ground state
-optimized_parameters = vqe.optimize_parameters(vqe.vqe_expval)
-eigenvalue = vqe.vqe_expval(optimized_parameters)
-eigenstate = vqe.get_eigenstate(optimized_parameters)
-print("result: ", eigenvalue, " expected: ", (-B/2-J/4)*orbitals, eigenstate)
-
-print("--- %s seconds ---" % (time.time() - start_time))
-
-"""
-
-
-import time
-start_time = time.time()
-executions=10
-
-x = []
-y = []
-y_std= []
-weights = []
-for lamda in range(1,5,1):
-    x.append(lamda)
-    print("lamda = ", lamda)
-    vqe.set_folding(lamda)
-    energies = []
-    for i in range(executions):
-        optimized_parameters = vqe.optimize_parameters(vqe.vqe_expval)
-        energy = vqe.vqe_expval(optimized_parameters)
-        if energy < 700:
-            energies.append(energy)
-    mean_energy = np.mean(energies)
-    std = np.std(energies)
-    y.append(mean_energy)
-    y_std.append(std)
-    weights.append(1/std)
-    print("Optimized energy: ", mean_energy, "all energies: ", energies)
+    ising_coeff = {'B':B,
+                   'J':J
+                   }
+    hamiltonian = Hamiltonian(n_qubits=orbitals, coeff=ising_coeff)
+    ansatz = Ansatz('ising', n_qubits=orbitals)
     
-    print("------------------------")
+    options = {
+        'shots':1024,
+        'ibmq':False,
+        'seed':10,
+        'backend':'qasm_simulator', #qasm/aer/ibmq_something
+        #'device':'ibm_nairobi' #to be simulated if using simulator
+        }
+    algorithm = Algorithm(options)
+    optimizer = Optimizer('cobyla', disp=False, max_iter=1000)
+    vqe = Eigensolver(fermions, orbitals, ansatz, hamiltonian(ising=True), optimizer, algorithm)
+    
+    import time
+    start_time = time.time()
+    
+    
+    
+    #ground state
+    vqe.set_ising_params(ising_coeff)
+    optimized_parameters = vqe.optimize_parameters(vqe.ising_expval)
+    eigenvalue = vqe.ising_expval(optimized_parameters)/orbitals
+    eigenstate = vqe.get_eigenstate(optimized_parameters)
+    x.append(B)
+    y.append(eigenvalue)
 
-b, m = np.polynomial.polynomial.polyfit(x, y, 1, rcond=None, full=False)
-plt.errorbar(x,y,yerr=y_std)
-plt.xlim([-1,11])
-plt.ylim([450,700])
-x = np.array(x)
-plt.plot(x, m*x + b)
-plt.show()
+fig, ax = plt.subplots()
 
+plt.ylabel('Energy')
+plt.xlabel('B')
+plt.scatter(x, y, marker=".", linewidth=2, zorder=3)
+#print("result: ", eigenvalue, " expected: ", (-B-J), eigenstate)
 
-print("--- %s seconds ---" % (time.time() - start_time))
+#print("--- %s seconds ---" % (time.time() - start_time))
+

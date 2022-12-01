@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jul 13 18:47:14 2022
+Created on Thu Oct 20 10:57:03 2022
 
 @author: cosmo
 """
+
 import numpy as np
 import scipy as sp
 import mpmath
 quarkonium_parameters = { #mass, #mass for spin, number of flavours, sigma, oscillation frequency, |R(0)|**2
-    'charmonium'   :[ 1317, 1317, 1410, 4,  0.18*10**6, 562.9, 0.856],
-    'bottomonium'  :[ 4584,  4584, 4769, 5,  0.25*10**6, 400, 6.476],
-    'bc'           :[ 1317,  4584, 4769, 5,  0.25*10**6, 500, 6.476]
+    'charmonium'   :[ 1310, 0.4,  0.167*10**6, 562.9, 1.049**2],
+    'bottomonium'  :[ 4660,  0.3,  0.158*10**6, 400, 2.447**2],
+    'bc'           :[ (1310+4660)/2,  0.34,  0.165*10**6, 500, 1.357**2]
 }
 Λ = 150 #Λqcd
 αHF = 0.31
@@ -23,11 +24,11 @@ def kron_delta(a,b):
     
 class Quarkonium:
     
-    def __init__(self, flavour):
-        self.mq, self.mqbar, self.mqs, nf, self.sigma, self.omega, self.R0 = quarkonium_parameters[flavour]
-        μ = 2*self.mq*self.mqbar/(self.mq+self.mqbar) #energy scale
-        self.αs = 12*np.pi/((33-2*nf)*np.log(μ**2/Λ**2))
-        self.k = (4/3)*self.αs
+    def __init__(self, flavour, w):
+        self.mq, self.αs, self.sigma, self.omega, self.R0 = quarkonium_parameters[flavour]
+        self.omega = w
+        μ = self.mq #energy scale
+        self.k = self.αs
         mu = μ/2 #reduced mass
         self.b = 1/np.sqrt(mu*self.omega)   
     
@@ -49,7 +50,7 @@ class Quarkonium:
     
     
     def VSS(self, S):
-        return 1000*8*αHF*self.R0/(9*(self.mqs/1000)**2)*(S*(S+1)/2-3/4) 
+        return 1000*8*self.αs*self.R0/(9*(self.mq/1000)**2)*(S*(S+1)/2-3/4) 
     
     
     def coeff(self, orbitals):
@@ -57,4 +58,3 @@ class Quarkonium:
         for m, n in [[_m, _n] for _m in range(orbitals) for _n in range(orbitals)]:
             coeff[m][n] += self.T(m,n) - self.k*self.r_inv(m,n) + self.sigma*self.r(m,n)
         return [coeff,None]
-    

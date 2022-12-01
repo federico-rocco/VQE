@@ -55,8 +55,9 @@ class Ansatz:
     
     def ising(self, qc, qb, theta):
         
-        qc.rz(theta[0], 0)
-        qc.ry(theta[1], 0)
+        qc.u(theta[0],theta[1],0,0)
+        #qc.rz(theta[0], 0)
+        #qc.ry(theta[1], 0)
 
         # apply series of CNOT gates
         for i in range(1, self.n_qubits):
@@ -64,7 +65,8 @@ class Ansatz:
 
         # add parametrized single-qubit rotations around y
         for i in range(self.n_qubits):
-            qc.ry(theta[2], i)
+            qc.u(theta[2],0,0,i)
+            #qc.ry(theta[2], i)
             
         return qc        
     
@@ -102,8 +104,9 @@ class Ansatz:
         #from a PauliSumOp take each string (e.g. 'XYZ') and apply e^(param*string) to the circuit
         pauli_op_list = pauli_sum_op.to_pauli_op()
         for pauli_op in pauli_op_list:
-            string = pauli_op.primitive.to_label()
-            qc = self.exp_op(qc, qb, string, param)
+            string = pauli_op.primitive.to_label()[::-1]
+            coeff = pauli_op.coeff.real
+            qc = self.exp_op(qc, qb, string, param*coeff)
         return qc
     
     
@@ -119,29 +122,28 @@ class Ansatz:
             if letter == "X":
                 qc.h(qb[i])
             elif letter == "Y":
+                qc.s(qb[i])
                 qc.h(qb[i])
-                qc.rx(np.pi/2, qb[i])
-    
             
         #compute parity and store it in the last qubit
         for i in range(self.n_qubits-1):
-            qc.cx(qb[i], self.n_qubits-1)
+            qc.cx(qb[i], -1)
         
         #apply parametrized rotation on the last qubit
-        qc.rz(theta, qb[self.n_qubits-1])
+        qc.rz(2*theta, qb[-1])
         
         #uncompute parity
         for i in range(self.n_qubits-2, -1, -1):
-            qc.cx(qb[i], qb[self.n_qubits-1])
+            qc.cx(qb[i], qb[-1])
     
         #restore Z basis
-        for (i, letter) in zip(range(self.n_qubits-1, -1, -1), reversed(pauli_string)):
+        for (i, letter) in zip(range(self.n_qubits), pauli_string):
             if letter == "X":
                 qc.h(qb[i])
             elif letter == "Y":
-                qc.rx(-np.pi/2, qb[i])
                 qc.h(qb[i])
-
+                qc.sdg(qb[i])
+                
         return qc
     
     

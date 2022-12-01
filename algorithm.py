@@ -22,7 +22,7 @@ class Algorithm:
     def __init__(self, options, n_qubits=3):
         self.shots = 1024 if options.get('shots') == None\
                             else options.get('shots')
-        self.seed = np.random.randint(0,100000) if options.get('seed') == None\
+        self.seed = None if options.get('seed') == None\
                             else options.get('seed')        
         self.ibmq = options.get('ibmq') 
         self.noise_model, self.coupling_map, self.basis_gates = None, None, None
@@ -64,9 +64,8 @@ class Algorithm:
                     self.basis_gates = self.noise_model.basis_gates
                     self.transpiler = device
 
-    
+
     def measure(self, qc, qb, cb):
-         
         qc.measure(qb, cb)
             
         if self.noise_model is not None:

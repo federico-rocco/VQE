@@ -66,7 +66,7 @@ class Eigensolver:
         return vqe.compute_minimum_eigenvalue(hamiltonian)
     
 
-    def expval(self, theta=None):
+    def expval(self, theta=None, f='g'):
         #self-made eigensolver, not using qiskit
         #build ansatz, then add a term of the hamiltonian at a time and compute the
         #expectation value <psi|H|psi>
@@ -75,8 +75,12 @@ class Eigensolver:
         cb = ClassicalRegister(self.n_qubits)
         qc = QuantumCircuit(qb)
         ansatz_qc = self.ansatz(qc, qb, theta)
-        ansatz_qc = circuit_folding(ansatz_qc, scaling=self.n_folding) #extend the circuit in case of noise extrapolation
+        if f=='c':
+            ansatz_qc = circuit_folding(ansatz_qc, scaling=self.n_folding) #extend the circuit in case of noise extrapolation
 
+        elif f=='g':
+            ansatz_qc = gate_folding(ansatz_qc, scaling=self.n_folding, way='Right') 
+            
         E = 0
         for pauli in self.hamiltonian:
             qc = QuantumCircuit(qb, cb)
@@ -131,6 +135,7 @@ class Eigensolver:
 
         ansatz_qc = self.ansatz(qc, qb, theta)
         measurement = self.algorithm.measure(ansatz_qc, qb, cb)
+        
         return measurement
     
     def get_ansatz(self, theta=None) :       
@@ -149,7 +154,7 @@ class Eigensolver:
         delta = 0 #8715
         for pauli in self.hamiltonian:
             delta += 2*abs(pauli.coeff)
-        return delta/self.factor
+        return delta
    
     def expval_excited_state(self, theta_k):
         #https://arxiv.org/pdf/1805.08138.pdf
@@ -163,24 +168,87 @@ class Eigensolver:
         cb = ClassicalRegister(self.n_qubits)
         qc = QuantumCircuit(qb, cb)
         ansatz_k = self.ansatz(qc, qb, theta_k)
+        ansatz_k
         
         overlap = 0
         for state in self.solved_states:
             qc = QuantumCircuit(qb, cb)
             inverse = self.ansatz(qc, qb, state.parameters).inverse()
-            
-            new_qc = ansatz_k + inverse #<ψ(Θi)|ψ(Θk)> 
+            new_qc = ansatz_k.compose(inverse) #<ψ(Θi)|ψ(Θk)> 
             
             measurement = self.algorithm.measure(new_qc, qb, cb)
-
+            
             zero = '0'*self.n_qubits
             if '0'*self.n_qubits in measurement:
-                overlap += measurement[zero] 
+                overlap += measurement[zero]/self.algorithm.shots
+                #print(overlap)
                 #|<ψ(Θi)|ψ(Θk)>|^2 = |<0|ψ(Θi)^-1 ψ(Θk)|0>|^2
                 #so we just count the all '0' qubits
+                
+        print(self.find_delta()*overlap, self.analytic_expval(theta_k))
+        return self.find_delta()*overlap + self.analytic_expval(theta_k)
 
-        return self.find_delta()*overlap + self.expval(theta_k)
 
+    def set_ising_params(self,coeff):
+        self.B=coeff['B']
+        self.J=coeff['J']
+
+    def E_Z(self,qc,qb,cb,i):
+        qc.h(i)
+        measurement = self.algorithm.measure(qc, qb[i], cb[i])
+        #print(measurement)
+        prob0, prob1 = self.count_bits(measurement)
+        return -(prob0[i]-prob1[i])
+        
+        
+
+    def E_J(self,qc,qb,cb,i):
+        measurement = self.algorithm.measure(qc, qb[i], cb[i])
+        #print(measurement)
+        prob0, prob1 = self.count_bits(measurement)
+        #print(prob0,prob1)
+        if i != self.n_qubits-1:
+            #print(prob0[i+1],prob1[i+1])
+            return -(prob0[i]-prob1[i])*(prob0[i+1]-prob1[i+1])
+        else:
+            #print('out')
+            return -(prob0[i]-prob1[i])*(prob0[0]-prob1[0])
+
+        
+    def count_bits(self,measurement):
+        bit0 = np.zeros(self.n_qubits)
+        bit1 = np.zeros(self.n_qubits)
+        for (state,value) in measurement.items():
+            i=0
+            #print('doing state',state)
+            for bit in state:
+                #print("bit",bit ,"of state",state,"position",i)
+                #print('doing bit',bit)
+                if bit=='1':
+                    #print('its equal to 1')
+                    bit1[i]+=value/self.algorithm.shots
+                    
+                elif bit=='0':
+                    #print('its equal to 0')
+                    bit0[i]+=value/self.algorithm.shots
+                i+=1
+        return bit0, bit1
+
+    def ising_expval(self,theta=None):
+        
+        qb = QuantumRegister(self.n_qubits)
+        cb = ClassicalRegister(self.n_qubits)
+        qc = QuantumCircuit(qb,cb)
+        ansatz_qc = self.ansatz(qc, qb, theta)
+        E = 0
+        #measurement = self.algorithm.measure(ansatz_qc, qb, cb) #measure the circuit  
+         
+            
+        for j in range(self.n_qubits):
+            #print(self.J*self.E_J(j,measurement))
+            E += (self.B*self.E_Z(ansatz_qc,qb,cb,j)+self.J*self.E_J(ansatz_qc,qb,cb,j))
+        
+        return E
 
         
 class State:

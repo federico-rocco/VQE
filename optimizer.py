@@ -30,7 +30,8 @@ class Optimizer:
         elif self.method == 'slsqp':
             self.opt = SLSQP(maxiter=self.max_iter, tol=self.tol, disp=self.disp)
         else:
-            self.scipy = True
+            import scipy
+            self.opt = scipy.optimize
         
 
 
